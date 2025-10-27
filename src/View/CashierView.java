@@ -1,9 +1,8 @@
 package View;
 
-import Model.LoginModel;
-import Controller.LoginController;
-import Database.DatabaseConnector;
-import static Invoice.InvoiceGenerator.generateInvoice;
+import controller.LoginController;
+import utils.DatabaseConnector;
+import services.InvoiceService;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.sql.Connection;
@@ -591,9 +590,7 @@ public class CashierView extends javax.swing.JFrame {
         LoginView login = new LoginView();
         login.setVisible(true);
 
-        LoginModel loginModel = new LoginModel();
-
-        LoginController logincontroller = new LoginController(login, loginModel);
+        LoginController logincontroller = new LoginController(login);
         logincontroller.initializeController();
         this.dispose();
     }//GEN-LAST:event_btnLoginActionPerformed
@@ -772,7 +769,7 @@ public class CashierView extends javax.swing.JFrame {
 
             try {
                 //run invoice generate method
-                generateInvoice(tblInv, txtTot, txtPay, txtBal);
+                InvoiceService.generateInvoice(tblInv, txtTot, txtPay, txtBal);
             } catch (Exception ex) {
                 Logger.getLogger(CashierView.class.getName()).log(Level.SEVERE, null, ex);
             }
