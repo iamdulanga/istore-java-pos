@@ -1,6 +1,6 @@
 package View;
 
-import Controller.LoginController;
+import controller.LoginController;
 
 public class LoginView extends javax.swing.JFrame {
 

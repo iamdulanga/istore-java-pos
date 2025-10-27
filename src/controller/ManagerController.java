@@ -2,7 +2,7 @@ package controller;
 
 import model.Product;
 import services.ProductService;
-import view.ManagerView;
+import View.ManagerView;
 
 import javax.swing.*;
 import java.sql.SQLException;

@@ -6,7 +6,7 @@ import model.SaleItem;
 import services.ProductService;
 import services.SaleService;
 import services.InvoiceService;
-import view.CashierView;
+import View.CashierView;
 
 import javax.swing.*;
 import java.sql.SQLException;
@@ -29,17 +29,20 @@ public class CashierController {
 
     /**
      * Searches for products by keyword.
+     * Note: Currently search is handled directly in CashierView.
+     * This method is for future refactoring.
      */
-    public void searchProducts(String keyword) {
+    public List<Product> searchProducts(String keyword) {
         try {
-            List<Product> products = productService.searchProducts(keyword);
-            view.displayProducts(products);
+            return productService.searchProducts(keyword);
         } catch (IllegalArgumentException e) {
             JOptionPane.showMessageDialog(view, e.getMessage(), "Validation Error", JOptionPane.WARNING_MESSAGE);
+            return null;
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(view, 
                 "An error occurred while searching: " + e.getMessage(), 
                 "Error", JOptionPane.ERROR_MESSAGE);
+            return null;
         }
     }
 

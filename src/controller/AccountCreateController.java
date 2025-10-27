@@ -1,6 +1,6 @@
 package controller;
 
-import view.AccountCreateView;
+import View.AccountCreateView;
 import services.AccountService;
 import javax.swing.JOptionPane;
 

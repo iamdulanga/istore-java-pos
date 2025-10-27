@@ -1,9 +1,9 @@
 package controller;
 
 import services.AccountService;
-import view.LoginView;
-import view.ManagerView;
-import view.CashierView;
+import View.LoginView;
+import View.ManagerView;
+import View.CashierView;
 import javax.swing.*;
 
 public class LoginController {

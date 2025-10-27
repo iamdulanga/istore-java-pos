@@ -1,7 +1,7 @@
 package main;
 
 import controller.LoginController;
-import view.LoginView;
+import View.LoginView;
 
 public class Main {
 
