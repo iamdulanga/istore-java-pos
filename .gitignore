@@ -1,0 +1,30 @@
+# Build artifacts
+build/
+dist/
+nbproject/private/
+
+# IDE files
+*.iml
+.idea/
+*.swp
+*.swo
+*~
+
+# Compiled class files
+*.class
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Log files
+*.log
+
+# OS specific
+.DS_Store
+Thumbs.db

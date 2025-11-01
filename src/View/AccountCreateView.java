@@ -1,6 +1,6 @@
 package View;
 
-import Controller.AccountCreateController;
+import controller.AccountCreateController;
 
 public class AccountCreateView extends javax.swing.JFrame {
 

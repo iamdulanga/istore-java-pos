@@ -1,20 +1,14 @@
 package View;
 
-import Controller.AccountCreateController;
-import Controller.LoginController;
-//import Controller.ManagerController;
-import Database.DatabaseConnector;
-import Model.LoginModel;
-import java.awt.HeadlessException;
+import controller.AccountCreateController;
+import controller.LoginController;
+import controller.ManagerController;
+import model.Product;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
 import javax.swing.table.DefaultTableModel;
@@ -22,16 +16,15 @@ import javax.swing.table.TableModel;
 
 public class ManagerView extends javax.swing.JFrame {
 
-//    private ManagerController controller;
-//
-//    public void setController(ManagerController controller) {
-//        this.controller = controller;
-//    }
+    private ManagerController controller;
     
     public ManagerView() {
         initComponents();
+        this.controller = new ManagerController(this);
         //start clock method
         startClock();
+        //load products
+        controller.loadProducts();
     }
 
     /**
@@ -581,49 +574,40 @@ public class ManagerView extends javax.swing.JFrame {
         return tblPro.getModel();
     }
 
-    private void btnSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSearchActionPerformed
-        //controller.handleSearch();
+    /**
+     * Helper method to display products in the table.
+     * Called by ManagerController.
+     */
+    public void displayProducts(List<Product> products) {
+        DefaultTableModel tblModel = (DefaultTableModel) tblPro.getModel();
+        tblModel.setRowCount(0);
         
-        //run the 'performSearch' method
-        performSearch();
+        for (Product product : products) {
+            String[] row = {
+                String.valueOf(product.getItemId()),
+                product.getName(),
+                product.getCategory(),
+                String.valueOf(product.getQuantity()),
+                String.valueOf(product.getPrice())
+            };
+            tblModel.addRow(row);
+        }
     }
 
+    private void btnSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSearchActionPerformed
+        if (txtSearch.getText().equals("")) {
+            JOptionPane.showMessageDialog(this, "Search Text Field is Empty!\nTry Again!");
+        } else {
+            controller.searchProducts(txtSearch.getText());
+        }
+    }//GEN-LAST:event_btnSearchActionPerformed
+
     private void performSearch() {
-        try {
-            if (txtSearch.getText().equals("")) {
-                JOptionPane.showMessageDialog(this, "Search Text Fiels is Empty!\nTry Again!");
-            } else {
-                Class.forName("com.mysql.cj.jdbc.Driver");
-                try (Connection con = DatabaseConnector.connect()) {
-                    //making the sql command
-                    String sql = "SELECT * FROM products WHERE name LIKE ? OR itemid LIKE ? OR category LIKE ?";
-                    try (PreparedStatement ps = con.prepareStatement(sql)) {
-                        ps.setString(1, "%" + txtSearch.getText() + "%");
-                        ps.setString(2, "%" + txtSearch.getText() + "%");
-                        ps.setString(3, "%" + txtSearch.getText() + "%");
-
-                        //execute the sql command
-                        ResultSet rs = ps.executeQuery();
-
-                        DefaultTableModel tblModel = (DefaultTableModel) tblPro.getModel();
-                        tblModel.setRowCount(0);
-
-                        while (rs.next()) {
-                            String id = String.valueOf(rs.getInt("ItemID"));
-                            String name = rs.getString("Name");
-                            String category = rs.getString("Category");
-                            String qty = rs.getString("qty");
-                            String price = rs.getString("Price");
-
-                            //equals string data to atring array
-                            String tbData[] = {id, name, category, qty, price};
-                            tblModel.addRow(tbData);
-                        }
-                    }
-                }
-            }
-        } catch (ClassNotFoundException | SQLException e) {
-            JOptionPane.showMessageDialog(this, "An Error Occurred While Searching!", "Error", JOptionPane.ERROR_MESSAGE);
+        // Deprecated - functionality moved to controller
+        if (txtSearch.getText().equals("")) {
+            JOptionPane.showMessageDialog(this, "Search Text Field is Empty!\nTry Again!");
+        } else {
+            controller.searchProducts(txtSearch.getText());
         }
     }//GEN-LAST:event_btnSearchActionPerformed
 
@@ -639,9 +623,7 @@ public class ManagerView extends javax.swing.JFrame {
         LoginView login = new LoginView();
         login.setVisible(true);
 
-        LoginModel loginModel = new LoginModel();
-
-        LoginController logincontroller = new LoginController(login, loginModel);
+        LoginController logincontroller = new LoginController(login);
         logincontroller.initializeController();
         this.dispose();
     }//GEN-LAST:event_btnBackLoginActionPerformed
@@ -690,31 +672,8 @@ public class ManagerView extends javax.swing.JFrame {
 
     private void btnViewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnViewActionPerformed
         if (!dataLoaded) {
-            try {
-                Class.forName("com.mysql.cj.jdbc.Driver");
-                try (Connection con = DatabaseConnector.connect()) {
-                    Statement st = con.createStatement();
-                    String sql = "select * from products";
-                    ResultSet rs = st.executeQuery(sql);
-
-                    while (rs.next()) {
-                        //get values from text boxes
-                        String id = String.valueOf(rs.getInt("itemid"));
-                        String name = rs.getString("name");
-                        String category = rs.getString("category");
-                        String qty = rs.getString("qty");
-                        String price = rs.getString("price");
-
-                        String tbData[] = {id, name, category, qty, price};
-
-                        DefaultTableModel tblModel = (DefaultTableModel) tblPro.getModel();
-                        tblModel.addRow(tbData);
-                    }
-                }
-                dataLoaded = true;
-            } catch (ClassNotFoundException | SQLException e) {
-                System.out.println(e.getMessage());
-            }
+            controller.loadProducts();
+            dataLoaded = true;
         } else {
             JOptionPane.showMessageDialog(this, "Products Are Already Loaded!");
         }
@@ -729,32 +688,7 @@ public class ManagerView extends javax.swing.JFrame {
         }
         
         int id = Integer.parseInt(tblModel.getValueAt(selectedRow, 0).toString());
-        
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection con = DatabaseConnector.connect();
-
-            try (Statement st = con.createStatement()) {
-                int userChoice = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete the selected row?", "Confirm Deletion", JOptionPane.YES_NO_OPTION);
-                if (userChoice == JOptionPane.YES_OPTION) {
-                    try (PreparedStatement ps = con.prepareStatement("DELETE FROM products WHERE itemid = ?")) {
-                        ps.setInt(1, id);
-                        int rowsAffected = ps.executeUpdate();
-                        if (rowsAffected > 0) {
-                            JOptionPane.showMessageDialog(this, "Selected product deleted successfully!");
-                            tblModel.removeRow(selectedRow);
-                        } else {
-                            JOptionPane.showMessageDialog(this, "Failed to delete the selected product.", "Error", JOptionPane.ERROR_MESSAGE);
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                System.out.println("Error Occured while Deleting " + e);
-            }
-        } catch (HeadlessException | ClassNotFoundException | SQLException e) {
-            //this message showed and 'droped the foreign key' in saleitems table
-            JOptionPane.showMessageDialog(this, "An error occurred while delete the selected product!", "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        controller.deleteProduct(id);
     }//GEN-LAST:event_btnDeleteActionPerformed
 
     private void btnUpdateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUpdateActionPerformed
@@ -765,60 +699,17 @@ public class ManagerView extends javax.swing.JFrame {
             return;
         }
 
-        int id = Integer.parseInt(tblPro.getValueAt(selectedRowIndex, 0).toString());
-
+        int oldId = Integer.parseInt(tblPro.getValueAt(selectedRowIndex, 0).toString());
+        
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            try (Connection con = DatabaseConnector.connect()) {
-                if (isItemIDExists(con, txtItemID.getText(), id)) {
-                    JOptionPane.showMessageDialog(this, "ItemID is Already Exists!\nPlease Add The Correct ItemID!");
-                } else {
-                    String updateQuery = "UPDATE products SET itemid=?, name=?, category=?, qty=?, price=? WHERE itemid=?";
-                    try (PreparedStatement ps = con.prepareStatement(updateQuery)) {
-
-                        ps.setString(1, txtItemID.getText());
-                        ps.setString(2, txtName.getText());
-                        ps.setString(3, txtCategory.getText());
-                        ps.setString(4, txtQty.getText());
-                        ps.setString(5, txtPrice.getText());
-                        ps.setInt(6, id);
-
-                        int rowsAffected = ps.executeUpdate();
-                        if (rowsAffected > 0) {
-                            JOptionPane.showMessageDialog(this, "Product Updated Successfully!");
-
-                            DefaultTableModel tblModel = (DefaultTableModel) tblPro.getModel();
-
-                            tblModel.setValueAt(txtItemID.getText(), selectedRowIndex, 0);
-                            tblModel.setValueAt(txtName.getText(), selectedRowIndex, 1);
-                            tblModel.setValueAt(txtCategory.getText(), selectedRowIndex, 2);
-                            tblModel.setValueAt(txtQty.getText(), selectedRowIndex, 3);
-                            tblModel.setValueAt(txtPrice.getText(), selectedRowIndex, 4);
-                        } else {
-                            JOptionPane.showMessageDialog(this, "Rows Aren't updated!\nPlease Check Inputs!");
-                        }
-                    }
-                }
-            }
-        } catch (HeadlessException | ClassNotFoundException | SQLException e) {
-            JOptionPane.showMessageDialog(this, "An Error Occurred While Updating The Product!", "Error", JOptionPane.ERROR_MESSAGE);
+            int newItemId = Integer.parseInt(txtItemID.getText());
+            int qty = Integer.parseInt(txtQty.getText());
+            double price = Double.parseDouble(txtPrice.getText());
+            
+            controller.updateProduct(newItemId, txtName.getText(), txtCategory.getText(), qty, price, oldId);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please enter valid numbers for Item ID, Quantity, and Price!", "Input Error", JOptionPane.ERROR_MESSAGE);
         }
-    }
-
-    //btn update id number checker
-    private boolean isItemIDExists(Connection con, String newItemID, int currentID) throws SQLException {
-        String checkQuery = "SELECT COUNT(*) FROM products WHERE itemid = ? AND itemid != ?";
-        try (PreparedStatement ps = con.prepareStatement(checkQuery)) {
-            ps.setString(1, newItemID);
-            ps.setInt(2, currentID);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    int count = rs.getInt(1);
-                    return count > 0;
-                }
-            }
-        }
-        return false;
     }//GEN-LAST:event_btnUpdateActionPerformed
 
     private void btnExitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExitActionPerformed
@@ -834,23 +725,14 @@ public class ManagerView extends javax.swing.JFrame {
         }
 
         int id = Integer.parseInt(tblModel.getValueAt(selectedRow, 0).toString());
-
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            try (Connection con = DatabaseConnector.connect(); Statement st = con.createStatement(); ResultSet res = st.executeQuery("SELECT * FROM products WHERE itemid=" + id)) {
-
-                if (res.next()) {
-                    txtItemID.setText(Integer.toString(res.getInt("itemid")));
-                    txtName.setText(res.getString("name"));
-                    txtCategory.setText(res.getString("category"));
-                    txtQty.setText(res.getString("qty"));
-                    txtPrice.setText(res.getString("price"));
-                } else {
-                    JOptionPane.showMessageDialog(this, "No data found for the selected product ID.", "No Data Found", JOptionPane.INFORMATION_MESSAGE);
-                }
-            }
-        } catch (HeadlessException | ClassNotFoundException | SQLException e) {
-            JOptionPane.showMessageDialog(this, "An error occurred while retrieving product data.", "Error", JOptionPane.ERROR_MESSAGE);
+        Product product = controller.getProductById(id);
+        
+        if (product != null) {
+            txtItemID.setText(String.valueOf(product.getItemId()));
+            txtName.setText(product.getName());
+            txtCategory.setText(product.getCategory());
+            txtQty.setText(String.valueOf(product.getQuantity()));
+            txtPrice.setText(String.valueOf(product.getPrice()));
         }
     }//GEN-LAST:event_tblProMouseClicked
 
@@ -859,52 +741,15 @@ public class ManagerView extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Some Fields Are Empty!\nCheck The Fields!");
         } else {
             try {
-                Class.forName("com.mysql.cj.jdbc.Driver");
-                try (Connection con = DatabaseConnector.connect()) {
-                    if (isItemIDExists(con, txtItemID.getText())) {
-                        JOptionPane.showMessageDialog(this, "ItemID Already Exists!\nPlease Add The Correct ID!");
-                    } else if (isProductNameExists(con, txtName.getText())) {
-                        JOptionPane.showMessageDialog(this, "Product Name Already Exists!\nPlease Add The Correct Name!");
-                    } else {
-                        Statement st = con.createStatement();
-
-                        String itemid = txtItemID.getText();
-                        String name = txtName.getText();
-                        String category = txtCategory.getText();
-                        String qty = txtQty.getText();
-                        String price = txtPrice.getText();
-
-                        boolean b = st.execute("insert into products(itemid, name, category, qty, price) values('" + itemid + "','" + name + "','" + category + "','" + qty + "','" + price + "')");
-                        if (!b) {
-                            JOptionPane.showMessageDialog(this, "Product Added Successfully!");
-
-                            DefaultTableModel tblModel = (DefaultTableModel) tblPro.getModel();
-                            String tbData[] = {itemid, name, category, qty, price};
-                            tblModel.addRow(tbData);
-                        } else {
-                            JOptionPane.showMessageDialog(this, "Error! Try Again!");
-                        }
-                    }
-                }
-            } catch (HeadlessException | ClassNotFoundException | SQLException e) {
-                JOptionPane.showMessageDialog(this, e);
+                int itemId = Integer.parseInt(txtItemID.getText());
+                int qty = Integer.parseInt(txtQty.getText());
+                double price = Double.parseDouble(txtPrice.getText());
+                
+                controller.addProduct(itemId, txtName.getText(), txtCategory.getText(), qty, price);
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Please enter valid numbers for Item ID, Quantity, and Price!", "Input Error", JOptionPane.ERROR_MESSAGE);
             }
         }
-    }
-
-    //btn add new id number checker
-    private boolean isItemIDExists(Connection con, String itemID) throws SQLException {
-        String checkQuery = "SELECT COUNT(*) FROM products WHERE itemid = ?";
-        try (PreparedStatement ps = con.prepareStatement(checkQuery)) {
-            ps.setString(1, itemID);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    int count = rs.getInt(1);
-                    return count > 0;
-                }
-            }
-        }
-        return false;
     }//GEN-LAST:event_btnAddNewActionPerformed
 
     private void btnRefActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRefActionPerformed
@@ -915,20 +760,6 @@ public class ManagerView extends javax.swing.JFrame {
 
     //Encapsulation
     private boolean dataLoaded = false;
-
-    private boolean isProductNameExists(Connection con, String productName) throws SQLException {
-        String checkQuery = "SELECT COUNT(*) FROM products WHERE name = ?";
-        try (PreparedStatement ps = con.prepareStatement(checkQuery)) {
-            ps.setString(1, productName);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    int count = rs.getInt(1);
-                    return count > 0;
-                }
-            }
-        }
-        return false;
-    }
 
     //Encapsulation
     private void startClock() {
